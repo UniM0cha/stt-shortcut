@@ -54,7 +54,7 @@ python3 generate_stt_shortcut.py YOUR_GROQ_API_KEY
 ## 주요 컨벤션
 
 - **외부 의존성 없음** — 모든 것이 Python 표준 라이브러리만 사용합니다. `pip` 패키지를 추가하지 마세요.
-- **한국어 문자열** — 모든 사용자 대면 텍스트(단축어 이름, 알림, CLI 메시지, 주석)는 한국어입니다. 이 관례를 유지하세요.
+- **모든 텍스트는 한국어** — 코드 주석, 커밋 메시지, PR 제목/본문, 사용자 대면 텍스트(단축어 이름, 알림, CLI 메시지) 모두 한국어로 작성하세요.
 - **설정 가능한 파라미터**는 `generate_shortcut()` 내에 인라인으로 존재합니다:
   - API URL: `https://api.groq.com/openai/v1/audio/transcriptions`
   - 모델: `whisper-large-v3`
