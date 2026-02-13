@@ -105,7 +105,7 @@ def generate_shortcut(api_key):
     record_uid = make_uuid()
     text_uid = make_uuid()
     request_uid = make_uuid()
-    dict_value_uid = make_uuid()
+    trim_uid = make_uuid()
 
     shortcut = {
         'WFWorkflowMinimumClientVersionString': '900',
@@ -171,6 +171,11 @@ def generate_shortcut(api_key):
                                     'WFKey': make_text('language'),
                                     'WFValue': make_text('ko'),
                                 },
+                                {
+                                    'WFItemType': 0,
+                                    'WFKey': make_text('response_format'),
+                                    'WFValue': make_text('text'),
+                                },
                                 make_file_field(record_uid),
                             ]
                         },
@@ -197,13 +202,15 @@ def generate_shortcut(api_key):
                 }
             },
 
-            # ─── [3] JSON에서 "text" 키 추출 ───
+            # ─── [3] 앞뒤 공백 제거 ───
             {
-                'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+                'WFWorkflowActionIdentifier': 'is.workflow.actions.text.replace',
                 'WFWorkflowActionParameters': {
                     'WFInput': make_attachment(request_uid, 'Contents of URL'),
-                    'WFDictionaryKey': 'text',
-                    'UUID': dict_value_uid,
+                    'WFReplaceTextFind': make_text(r'^\s+|\s+$'),
+                    'WFReplaceTextReplace': make_text(''),
+                    'WFReplaceTextRegularExpression': True,
+                    'UUID': trim_uid,
                 }
             },
 
@@ -211,7 +218,7 @@ def generate_shortcut(api_key):
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.setclipboard',
                 'WFWorkflowActionParameters': {
-                    'WFInput': make_attachment(dict_value_uid, 'Dictionary Value'),
+                    'WFInput': make_attachment(trim_uid, 'Updated Text'),
                 }
             },
 
@@ -219,7 +226,7 @@ def generate_shortcut(api_key):
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
                 'WFWorkflowActionParameters': {
-                    'WFNotificationActionBody': make_inline_var(dict_value_uid, 'Dictionary Value'),
+                    'WFNotificationActionBody': make_inline_var(trim_uid, 'Updated Text'),
                     'WFNotificationActionTitle': '받아쓰기 완료',
                 }
             },
