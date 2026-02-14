@@ -105,12 +105,19 @@ def generate_shortcut(api_key):
     record_uid = make_uuid()
     text_uid = make_uuid()
     request_uid = make_uuid()
+    dict_value_uid = make_uuid()
     trim_uid = make_uuid()
+    clipboard_uid = make_uuid()
+    notification_uid = make_uuid()
 
     shortcut = {
+        'WFQuickActionSurfaces': [],
         'WFWorkflowMinimumClientVersionString': '900',
         'WFWorkflowMinimumClientVersion': 900,
-        'WFWorkflowClientVersion': '1172.1',
+        'WFWorkflowClientVersion': '3612.0.2.3',
+        'WFWorkflowHasOutputFallback': False,
+        'WFWorkflowHasShortcutInputVariables': False,
+        'WFWorkflowOutputContentItemClasses': [],
         'WFWorkflowIcon': {
             'WFWorkflowIconStartColor': 463140863,   # 파란색
             'WFWorkflowIconGlyphNumber': 61440,       # 마이크 아이콘
@@ -118,7 +125,7 @@ def generate_shortcut(api_key):
         'WFWorkflowInputContentItemClasses': [
             'WFStringContentItem',
         ],
-        'WFWorkflowTypes': ['NCWidget', 'WatchKit'],
+        'WFWorkflowTypes': ['Watch', 'NCWidget'],
         'WFWorkflowImportQuestions': [
             {
                 'ActionIndex': 1,
@@ -135,7 +142,7 @@ def generate_shortcut(api_key):
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.recordaudio',
                 'WFWorkflowActionParameters': {
                     'WFRecordingStart': 'Immediately',
-                    'WFRecordingCompression': 'Lossless',
+                    'WFRecordingCompression': 'Very High',
                     'UUID': record_uid,
                 }
             },
@@ -144,7 +151,7 @@ def generate_shortcut(api_key):
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.gettext',
                 'WFWorkflowActionParameters': {
-                    'WFTextActionText': make_text(api_key),
+                    'WFTextActionText': api_key,
                     'UUID': text_uid,
                 }
             },
@@ -170,11 +177,6 @@ def generate_shortcut(api_key):
                                     'WFItemType': 0,
                                     'WFKey': make_text('language'),
                                     'WFValue': make_text('ko'),
-                                },
-                                {
-                                    'WFItemType': 0,
-                                    'WFKey': make_text('response_format'),
-                                    'WFValue': make_text('text'),
                                 },
                                 make_file_field(record_uid),
                             ]
@@ -202,32 +204,44 @@ def generate_shortcut(api_key):
                 }
             },
 
-            # ─── [3] 앞뒤 공백 제거 ───
+            # ─── [3] JSON에서 "text" 키 추출 ───
+            {
+                'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+                'WFWorkflowActionParameters': {
+                    'WFInput': make_attachment(request_uid, 'Contents of URL'),
+                    'WFDictionaryKey': 'text',
+                    'UUID': dict_value_uid,
+                }
+            },
+
+            # ─── [4] 앞뒤 공백 제거 ───
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.text.replace',
                 'WFWorkflowActionParameters': {
-                    'WFInput': make_attachment(request_uid, 'Contents of URL'),
-                    'WFReplaceTextFind': make_text(r'^\s+|\s+$'),
-                    'WFReplaceTextReplace': make_text(''),
+                    'WFInput': make_inline_var(dict_value_uid, '사전 값'),
+                    'WFReplaceTextFind': r'^\s+|\s+$',
+                    'WFReplaceTextReplace': '',
                     'WFReplaceTextRegularExpression': True,
                     'UUID': trim_uid,
                 }
             },
 
-            # ─── [4] 클립보드에 복사 ───
+            # ─── [5] 클립보드에 복사 ───
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.setclipboard',
                 'WFWorkflowActionParameters': {
                     'WFInput': make_attachment(trim_uid, 'Updated Text'),
+                    'UUID': clipboard_uid,
                 }
             },
 
-            # ─── [5] 알림 표시 ───
+            # ─── [6] 알림 표시 ───
             {
                 'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
                 'WFWorkflowActionParameters': {
                     'WFNotificationActionBody': make_inline_var(trim_uid, 'Updated Text'),
                     'WFNotificationActionTitle': '받아쓰기 완료',
+                    'UUID': notification_uid,
                 }
             },
         ]
